@@ -10,10 +10,39 @@ current_cube_state = None
 node_positions = {}
 node_radius = 10
 initial_state = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
+def add_node(Cube, move, center_pos):
+    """
+    Add a new node to the graph corresponding to the given move from the current cube state.
+    cube_state: Current state of the cube.
+    move: The move to apply to the cube state.
+    center_pos: The position around which the new node should be placed.
+    """
+    cube_state = Cube.flat_str()
+    new_cube = apply_move_and_get_new_state(Cube, move)
+    new_state = new_cube.flat_str()
 
+    if new_state not in node_positions:
+        # Generate a random angle for positioning the new node
+        angle = random.uniform(0, 2 * math.pi)
+        offset_distance = 100  # Distance from the center_pos
+
+        # Calculate and store the position for the new node
+        x = int(center_pos[0] + offset_distance * math.cos(angle))
+        y = int(center_pos[1] + offset_distance * math.sin(angle))
+        new_x = max(0, min(x, 800))
+        new_y = max(0, min(y, 600))
+        node_positions[new_state] = (new_x, new_y)
+
+        # Update the graph with the new state
+        if cube_state not in graph:
+            graph[cube_state] = []
+        graph[cube_state].append(new_state)
+
+        print("Node added for move:", move, "New state:", new_state)
+    return new_cube
 def calculate_forces():
     # Constants for forces
-    repulsion_const = 500
+    repulsion_const = 0.001
     attraction_const = 0.000001
 
     force_on_nodes = {state: pygame.math.Vector2(0, 0) for state in node_positions}
@@ -151,6 +180,9 @@ def main():
         update_positions()  # Update positions based on forces
 
         draw_graph(screen)
+        cube = add_node(cube, "U", node_positions[cube.flat_str()])
+
+        cube = add_node(cube, "R", node_positions[cube.flat_str()])
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -161,12 +193,16 @@ def main():
                 if clicked_state:
                     expand_graph(clicked_state, node_positions[clicked_state])
                     #update_positions()
+                    cube = add_node(cube, "U", node_positions[cube.flat_str()])
+
+                    cube = add_node(cube, "R", node_positions[cube.flat_str()])
         #draw_cube(current_cube_state, screen, scale)  # Draw the cube
         if clicked_state is not None:
             prev_state = clicked_state
             draw_cube(clicked_state, screen, scale)  # Draw the cube
         else:
-            draw_cube(prev_state, screen, scale)
+            pass
+        draw_cube(cube.flat_str(), screen, scale)
         pygame.display.flip()
 
     pygame.quit()
