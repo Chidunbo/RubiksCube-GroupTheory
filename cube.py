@@ -88,8 +88,8 @@ def update_positions():
     forces = calculate_forces()
     for state, force in forces.items():
         # Update positions based on forces
-        new_x = node_positions[state][0] + force.x * 0.1
-        new_y = node_positions[state][1] + force.y * 0.1
+        new_x = node_positions[state][0] + force.x * 0.01
+        new_y = node_positions[state][1] + force.y * 0.01
         
         # Ensure the new position stays within the screen boundaries
         new_x = max(0, min(new_x, max_x))
@@ -108,11 +108,17 @@ def expand_graph(cube_state, center_pos):
 
     # Retain the current path and clear other nodes
     new_graph = {}
+    last_node_in_path = None
     for state in graph:
         if state == current_cube_state:
             new_graph[state] = [cube_state]
+            last_node_in_path = state
         else:
             new_graph[state] = graph[state]
+
+    # Adjust the position of the last node in the path to create a longer edge
+    if last_node_in_path and last_node_in_path in node_positions:
+        adjust_last_node_position(last_node_in_path, cube_state, 1.8)  # 1.5 is the lengthening factor
 
     # Clear node_positions of nodes not in new_graph
     for state in list(node_positions.keys()):
@@ -132,29 +138,71 @@ def expand_graph(cube_state, center_pos):
         if new_state not in graph[cube_state]:
             graph[cube_state].append(new_state)
             if new_state not in node_positions:
-                x = int(center_pos[0] + 50 * math.cos(math.radians(angle)))
-                y = int(center_pos[1] + 50 * math.sin(math.radians(angle)))
+                x = int(center_pos[0] + 80 * math.cos(math.radians(angle)))
+                y = int(center_pos[1] + 80 * math.sin(math.radians(angle)))
                 node_positions[new_state] = (x, y)
-                # Store new neighbors
                 current_neighbors[new_state] = (x, y)
             angle += 30
 
     print("Graph expanded for state:", cube_state)
 
+    return last_node_in_path
 
+def adjust_last_node_position(last_node, current_node, factor):
+    last_x, last_y = node_positions[last_node]
+    current_x, current_y = node_positions[current_node]
 
-def draw_graph(screen, font, clicked_state=None):
-    # Draw lines and existing nodes
+    direction_x = current_x - last_x
+    direction_y = current_y - last_y
+    length = math.sqrt(direction_x**2 + direction_y**2)
+
+    # Check to prevent division by zero
+    if length == 0:
+        return
+
+    # Normalize the direction vector
+    direction_x /= length
+    direction_y /= length
+
+    # Extend the last node position
+    extended_x = last_x - direction_x * length * (factor - 1)
+    extended_y = last_y - direction_y * length * (factor - 1)
+
+    node_positions[last_node] = (int(extended_x), int(extended_y))
+
+def extend_line(start_x, start_y, end_x, end_y, factor):
+    # Calculate the direction of the line
+    direction_x = end_x - start_x
+    direction_y = end_y - start_y
+
+    # Normalize the direction
+    length = math.sqrt(direction_x**2 + direction_y**2)
+    direction_x /= length
+    direction_y /= length
+
+    # Extend the line
+    extended_x = end_x + direction_x * length * (factor - 1)
+    extended_y = end_y + direction_y * length * (factor - 1)
+
+    return extended_x, extended_y
+def draw_graph(screen, font, clicked_state=None, last_node_in_path=None):
+    edge_extension_factor = 1  # Factor to extend the edge length
+
     for state, neighbors in graph.items():
         start_x, start_y = node_positions[state]
         for neighbor in neighbors:
             end_x, end_y = node_positions[neighbor]
-            pygame.draw.line(screen, LINE_COLOR, (start_x, start_y), (end_x, end_y), 1)
 
-        node_color = HIGHLIGHT_COLOR if state == clicked_state else NODE_COLOR
-        
-        pygame.draw.circle(screen, node_color, (start_x, start_y), node_radius)
+            # Check if this edge is between the clicked node and the last node in the path
+            if (state == clicked_state and neighbor == last_node_in_path) or (state == last_node_in_path and neighbor == clicked_state):
+                # Calculate the extended points for the edge
+                extended_x, extended_y = extend_line(start_x, start_y, end_x, end_y, edge_extension_factor)
+                pygame.draw.line(screen, LINE_COLOR, (start_x, start_y), (extended_x, extended_y), 1)
+            else:
+                pygame.draw.line(screen, LINE_COLOR, (start_x, start_y), (end_x, end_y), 1)
 
+            node_color = HIGHLIGHT_COLOR if state == clicked_state else NODE_COLOR
+            pygame.draw.circle(screen, node_color, (start_x, start_y), node_radius)
     # Draw and label new neighbor nodes
     if clicked_state:
         for move in ["U", "Ui", "D", "Di", "L", "Li", "R", "Ri", "F", "Fi", "B", "Bi"]:
@@ -266,6 +314,7 @@ def main():
     
     # Set clicked state to the initial state at the start
     clicked_state = initial_state  # This line is modified to set the initial state as clicked
+    last_node_in_path = None
 
     running = True
     font = pygame.freetype.Font(None, 20)
@@ -281,7 +330,8 @@ def main():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 clicked_state = check_click_on_node(pygame.mouse.get_pos())
                 if clicked_state:
-                    expand_graph(clicked_state, node_positions[clicked_state])
+                    last_node_in_path = expand_graph(clicked_state, node_positions[clicked_state])
+                draw_graph(screen, font, clicked_state, last_node_in_path)
 
         if clicked_state is not None:
             draw_cube(clicked_state, screen, scale)  # Draw the cube for the clicked state
