@@ -12,6 +12,7 @@ move_colors = {
     "F": (255, 0, 255), "Fi": (255, 100, 255),
     "B": (0, 255, 255), "Bi": (100, 255, 255)
 }
+
 graph = {}
 visited_states = set()
 current_cube_state = None
