@@ -62,8 +62,8 @@ def calculate_forces():
     # Calculate attractive forces
     for state, neighbors in graph.items():
         for neighbor in neighbors:
-            diff = pygame.math.Vector2(node_positions[neighbor]) - pygame.math.Vector2(node_positions[state])
-            distance = diff.length() +0.0000000001
+            diff = pygame.math.Vector2(node_positions[neighbor]) - pygame.math.Vector2(node_positions[state])+pygame.math.Vector2(0.0000000001, 0.0000000001)
+            distance = diff.length() 
             attraction_force = distance**2 * attraction_const
             force_on_nodes[state] -= diff.normalize() * attraction_force
             force_on_nodes[neighbor] += diff.normalize() * attraction_force
@@ -178,22 +178,25 @@ def main():
     clicked_state = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
     running = True
     counter = 0
-    move_count = 0 
+    move_count = 0
     while running:
         screen.fill((0, 0, 0))
         update_positions()  # Update positions based on forces
 
         draw_graph(screen)
 
-        if counter%10 ==0:
+        if counter%2 ==0:
             cube = add_node(cube, "U", node_positions[cube.flat_str()])
 
             cube = add_node(cube, "R", node_positions[cube.flat_str()])
             move_count +=1
+            #print(move_count)
+        print("curr State:", cube.flat_str())
+
         counter += 1
-        if cube.flat_str == initial_state:
+        if cube.flat_str() == "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB":
             print(move_count)
-            pygame.quit
+            pygame.time.wait(10000000)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -201,7 +204,8 @@ def main():
                 clicked_state = check_click_on_node(pygame.mouse.get_pos())
 
                 if clicked_state:
-                    expand_graph(clicked_state, node_positions[clicked_state])
+                    pass
+                    #expand_graph(clicked_state, node_positions[clicked_state])
                     #update_positions()
                     #cube = add_node(cube, "U", node_positions[cube.flat_str()])
 
