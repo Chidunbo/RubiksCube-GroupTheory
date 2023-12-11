@@ -118,7 +118,7 @@ def expand_graph(cube_state, center_pos):
 
     # Adjust the position of the last node in the path to create a longer edge
     if last_node_in_path and last_node_in_path in node_positions:
-        adjust_last_node_position(last_node_in_path, cube_state, 1.8)  # 1.5 is the lengthening factor
+        adjust_last_node_position(last_node_in_path, cube_state, 1.5)  # 1.5 is the lengthening factor
 
     # Clear node_positions of nodes not in new_graph
     for state in list(node_positions.keys()):
@@ -138,8 +138,8 @@ def expand_graph(cube_state, center_pos):
         if new_state not in graph[cube_state]:
             graph[cube_state].append(new_state)
             if new_state not in node_positions:
-                x = int(center_pos[0] + 80 * math.cos(math.radians(angle)))
-                y = int(center_pos[1] + 80 * math.sin(math.radians(angle)))
+                x = int(center_pos[0] + 100 * math.cos(math.radians(angle)))
+                y = int(center_pos[1] + 100 * math.sin(math.radians(angle)))
                 node_positions[new_state] = (x, y)
                 current_neighbors[new_state] = (x, y)
             angle += 30
@@ -217,6 +217,8 @@ def draw_graph(screen, font, clicked_state=None, last_node_in_path=None):
                 # If the node is an existing neighbor, label it with the move color
                 x, y = node_positions[new_state]
                 font.render_to(screen, (x + 15, y), move, move_colors[move])
+                #node_color = HIGHLIGHT_COLOR if state == clicked_state else NODE_COLOR
+                pygame.draw.circle(screen, move_colors[move], (x, y), node_radius)
 
 
 def check_click_on_node(mouse_pos):
