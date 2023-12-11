@@ -152,6 +152,7 @@ def draw_graph(screen, font, clicked_state=None):
             pygame.draw.line(screen, LINE_COLOR, (start_x, start_y), (end_x, end_y), 1)
 
         node_color = HIGHLIGHT_COLOR if state == clicked_state else NODE_COLOR
+        
         pygame.draw.circle(screen, node_color, (start_x, start_y), node_radius)
 
     # Draw and label new neighbor nodes
@@ -161,7 +162,8 @@ def draw_graph(screen, font, clicked_state=None):
             new_state = new_cube.flat_str()
             if new_state in current_neighbors:
                 x, y = current_neighbors[new_state]
-                pygame.draw.circle(screen, move_colors[move], (x, y), node_radius)
+
+                pygame.draw.circle(screen, move_colors[move], (x, y), node_radius-2)
                 font.render_to(screen, (x + 15, y), move, move_colors[move])
             elif new_state in node_positions and new_state in graph[clicked_state]:
                 # If the node is an existing neighbor, label it with the move color
