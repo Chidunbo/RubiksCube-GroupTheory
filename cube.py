@@ -5,7 +5,7 @@ import random
 import math
 # Define colors
 move_colors = {
-    "U": (255, 0, 0), "Ui": (255, 100, 100),
+    "U": (255, 255, 255), "Ui": (255, 100, 100),
     "D": (0, 255, 0), "Di": (100, 255, 100),
     "L": (0, 0, 255), "Li": (100, 100, 255),
     "R": (255, 255, 0), "Ri": (255, 255, 100),
@@ -203,7 +203,8 @@ def draw_graph(screen, font, clicked_state=None, last_node_in_path=None):
 
             node_color = HIGHLIGHT_COLOR if state == clicked_state else NODE_COLOR
             pygame.draw.circle(screen, node_color, (start_x, start_y), node_radius)
-    # Draw and label new neighbor nodes
+    # Draw and label new neighbor nodes 
+    #push test
     if clicked_state:
         for move in ["U", "Ui", "D", "Di", "L", "Li", "R", "Ri", "F", "Fi", "B", "Bi"]:
             new_cube = apply_move_and_get_new_state(Cube(clicked_state), move)
