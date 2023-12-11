@@ -4,21 +4,13 @@ from rubik.cube import Cube
 import random
 import math
 # Define colors
-move_colors = {
-    "U": (255, 0, 0), "Ui": (255, 100, 100),
-    "D": (0, 255, 0), "Di": (100, 255, 100),
-    "L": (0, 0, 255), "Li": (100, 100, 255),
-    "R": (255, 255, 0), "Ri": (255, 255, 100),
-    "F": (255, 0, 255), "Fi": (255, 100, 255),
-    "B": (0, 255, 255), "Bi": (100, 255, 255)
-}
 graph = {}
 visited_states = set()
 current_cube_state = None
 node_positions = {}
 current_neighbors = {}
 
-node_radius = 10
+node_radius = 5
 initial_state = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
 HIGHLIGHT_COLOR = (0, 255, 0)  # Green for clicked node
 NEIGHBOR_COLOR = (0, 0, 255)   # Blue for neighbors
@@ -37,6 +29,11 @@ def add_node(Cube, move, center_pos):
     new_cube = apply_move_and_get_new_state(Cube, move)
     new_state = new_cube.flat_str()
 
+    # Ensure the current cube state is in the graph
+    if cube_state not in graph:
+        graph[cube_state] = []
+
+    # Add or update node
     if new_state not in node_positions:
         # Generate a random angle for positioning the new node
         angle = random.uniform(0, 2 * math.pi)
@@ -45,20 +42,32 @@ def add_node(Cube, move, center_pos):
         # Calculate and store the position for the new node
         x = int(center_pos[0] + offset_distance * math.cos(angle))
         y = int(center_pos[1] + offset_distance * math.sin(angle))
-        new_x = max(0, min(x, max_x))
-        new_y = max(0, min(y, max_y))
+        new_x = max(10, min(x, max_x)-10)
+        new_y = max(10, min(y, max_y)-10)
         node_positions[new_state] = (new_x, new_y)
+    else:
+        # If the node already exists, update its neighbors
+        for neighbor in graph[new_state]:
+            if neighbor != cube_state:
+                # Ensure the neighbor is initialized in the graph
+                if neighbor not in graph:
+                    graph[neighbor] = []
+                graph[neighbor].append(cube_state)
+                if cube_state not in graph:
+                    graph[cube_state] = []
+                graph[cube_state].append(neighbor)
 
-        # Update the graph with the new state
-        if cube_state not in graph:
-            graph[cube_state] = []
+    # Connect the current state with the new state
+    if new_state not in graph[cube_state]:
         graph[cube_state].append(new_state)
 
-        print("Node added for move:", move, "New state:", new_state)
+    print("Node added/updated for move:", move, "State:", new_state)
     return new_cube
+
+
 def calculate_forces():
     # Constants for forces
-    repulsion_const = 0.00001
+    repulsion_const = 0.000001
     attraction_const = 0.000001
 
     force_on_nodes = {state: pygame.math.Vector2(0, 0) for state in node_positions}
@@ -76,7 +85,7 @@ def calculate_forces():
     # Calculate attractive forces
     for state, neighbors in graph.items():
         for neighbor in neighbors:
-            diff = pygame.math.Vector2(node_positions[neighbor]) - pygame.math.Vector2(node_positions[state]) + pygame.math.Vector2(.00000001,.00000001)
+            diff = pygame.math.Vector2(node_positions[neighbor]) - pygame.math.Vector2(node_positions[state]) + pygame.math.Vector2(.00001,.00001)
             distance = diff.length()
             attraction_force = distance**2 * attraction_const
             force_on_nodes[state] -= diff.normalize() * attraction_force
@@ -92,8 +101,8 @@ def update_positions():
         new_y = node_positions[state][1] + force.y * 0.1
         
         # Ensure the new position stays within the screen boundaries
-        new_x = max(0, min(new_x, max_x))
-        new_y = max(0, min(new_y, max_y))
+        new_x = max(10, min(new_x, max_x)-10)
+        new_y = max(10, min(new_y, max_y)-10)
         
         node_positions[state] = (new_x, new_y)
 
@@ -143,28 +152,23 @@ def expand_graph(cube_state, center_pos):
 
 
 
-def draw_graph(screen, font, clicked_state=None):
+def draw_graph(screen, clicked_state=None):
     for state, neighbors in graph.items():
         start_x, start_y = node_positions[state]
         for neighbor in neighbors:
             end_x, end_y = node_positions[neighbor]
-            pygame.draw.line(screen, LINE_COLOR, (start_x, start_y), (end_x, end_y), 1)
+            if state == clicked_state or neighbor == clicked_state:
+                line_color = NEIGHBOR_COLOR
+            else:
+                line_color = LINE_COLOR
+            pygame.draw.line(screen, line_color, (start_x, start_y), (end_x, end_y), 1)
 
         node_color = HIGHLIGHT_COLOR if state == clicked_state else NODE_COLOR
         pygame.draw.circle(screen, node_color, (start_x, start_y), node_radius)
 
-    # Draw the new neighbor nodes with unique colors and labels
-    if clicked_state:
-        move_index = 0
-        for move in ["U", "Ui", "D", "Di", "L", "Li", "R", "Ri", "F", "Fi", "B", "Bi"]:
-            new_cube = apply_move_and_get_new_state(Cube(clicked_state), move)
-            new_state = new_cube.flat_str()
-            if new_state in current_neighbors:
-                x, y = current_neighbors[new_state]
-                pygame.draw.circle(screen, move_colors[move], (x, y), node_radius)
-                # Render the move label
-                font.render_to(screen, (x + 15, y), move, move_colors[move])
-            move_index += 1
+    # Draw the new neighbor nodes
+    for state, pos in current_neighbors.items():
+        pygame.draw.circle(screen, NEIGHBOR_COLOR, pos, node_radius)
 
 def check_click_on_node(mouse_pos):
     for state, pos in node_positions.items():
@@ -222,21 +226,6 @@ def draw_cube(cube_state, screen, scale):
                                  (j * scale + face % 3 * 3 * scale, i * scale + face // 3 * 3 * scale, scale, scale))
                 pygame.draw.rect(screen, (0, 0, 0),
                                  (j * scale + face % 3 * 3 * scale, i * scale + face // 3 * 3 * scale, scale, scale), 1)
-def determine_move(state1, state2):
-    """
-    Determine the move made between two states.
-    """
-    moves = ["U", "Ui", "D", "Di", "L", "Li", "R", "Ri", "F", "Fi", "B", "Bi"]
-    cube1 = Cube(state1)
-    
-    for move in moves:
-        # Apply each move to the first state
-        temp_cube = Cube(cube1.flat_str())  # Create a copy to avoid modifying the original
-        apply_move_and_get_new_state(temp_cube, move)
-        if temp_cube.flat_str() == state2:
-            return move  # Found the move that transforms state1 into state2
-
-    return None  # No single move found
 
 def main():
     global current_cube_state, graph, node_positions  # Declare as global to modify them
@@ -247,45 +236,59 @@ def main():
 
     # Set initial state
     current_cube_state = initial_state
-    center_pos = (max_x//2, max_y//2)  # Center of the screen
+    center_pos = (max_x // 2, max_y // 2)  # Center of the screen
 
     # Initialize graph and node_positions with the initial state
     graph[current_cube_state] = []
     node_positions[current_cube_state] = center_pos
 
-    # Expand graph from the initial state
-    expand_graph(current_cube_state, center_pos)
-
     scale = 30  # Scale for each sticker
-    cube = Cube(initial_state)
-    
-    # Set clicked state to the initial state at the start
-    clicked_state = initial_state  # This line is modified to set the initial state as clicked
-
+    clicked_state = None
     running = True
-    font = pygame.freetype.Font(None, 20)
+    moves = ["U", "Ui", "D", "Di", "L", "Li", "R", "Ri", "F", "Fi", "B", "Bi"]
 
-    while running:
-        screen.fill((0, 0, 0))
+    for move1 in moves:
+        for move2 in moves:
+            cube = Cube(initial_state)
+            current_cube_state = cube.flat_str()
+            cube = add_node(cube, move1, node_positions[current_cube_state])
+            cube = add_node(cube, move2, node_positions[current_cube_state])
 
-        draw_graph(screen, font, clicked_state)
-        update_positions()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                clicked_state = check_click_on_node(pygame.mouse.get_pos())
-                if clicked_state:
-                    expand_graph(clicked_state, node_positions[clicked_state])
+            while cube.flat_str() != initial_state: # Apply first move
+                cube = add_node(cube, move1, node_positions[current_cube_state])
+                current_cube_state = cube.flat_str()
 
-        if clicked_state is not None:
-            draw_cube(clicked_state, screen, scale)  # Draw the cube for the clicked state
-        else:
-            draw_cube(cube.flat_str(), screen, scale)  # Draw the initial cube
+            # Apply second move
+                cube = add_node(cube, move2, node_positions[current_cube_state])
+                current_cube_state = cube.flat_str()
 
-        pygame.display.flip()
+            # Check if solved state is reached
+            if cube.flat_str() == initial_state:
+                draw_graph(screen, clicked_state)
+                #update_positions()
+                #draw_cube(cube.flat_str(), screen, scale)  # Draw the current cube
+                pygame.display.flip()
+                pygame.time.wait(5)  # Delay for visual effect  # Skip the rest and go to the next pair if solved
+
+            # Visual update for the current move pair
+            screen.fill((0, 0, 0))
+           
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            if not running:
+                break
+
+        if not running:
+            break
 
     pygame.quit()
+
+if __name__ == "__main__":
+    main()
+
 
 if __name__ == "__main__":
     main()
