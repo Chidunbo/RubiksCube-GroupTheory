@@ -300,7 +300,7 @@ def main():
 
     # Set initial state
     current_cube_state = initial_state
-    center_pos = (max_x//2, max_y//2)  # Center of the screen
+    center_pos = (max_x // 2, max_y // 2)  # Center of the screen
 
     # Initialize graph and node_positions with the initial state
     graph[current_cube_state] = []
@@ -313,7 +313,7 @@ def main():
     cube = Cube(initial_state)
     
     # Set clicked state to the initial state at the start
-    clicked_state = initial_state  # This line is modified to set the initial state as clicked
+    clicked_state = initial_state
     last_node_in_path = None
 
     running = True
@@ -324,12 +324,15 @@ def main():
 
         draw_graph(screen, font, clicked_state)
         update_positions()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                clicked_state = check_click_on_node(pygame.mouse.get_pos())
-                if clicked_state:
+                # Check if a node was clicked
+                new_clicked_state = check_click_on_node(pygame.mouse.get_pos())
+                if new_clicked_state:
+                    clicked_state = new_clicked_state
                     last_node_in_path = expand_graph(clicked_state, node_positions[clicked_state])
                 draw_graph(screen, font, clicked_state, last_node_in_path)
 
