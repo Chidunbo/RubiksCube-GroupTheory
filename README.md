@@ -45,5 +45,9 @@ python cube_looper.py
 ```
 The script does not accept command-line arguments. Modify the moves list inside cube_looper.py to explore different move sequences.
 Here is the graph for all possible 2-combination moves using standard rubik's cube notation, starting from the solved state, until the solved state is reached again:
+
 <img src="pics/dorito.gif" width="600" height="600" />
 
+
+Graph embedding and general Rubik's cube graph ideas heavily inspired by: 
+https://www.youtube.com/watch?v=iXIaCW2cxdw
