@@ -79,7 +79,7 @@ def add_node(Cube, move, center_pos):
     if new_state not in graph[cube_state]:
         graph[cube_state].append(new_state)
 
-    print("Node added/updated for move:", move, "State:", new_state)
+    #print("Node added/updated for move:", move, "State:", new_state)
     return new_cube, center_pos
 
 
@@ -166,7 +166,7 @@ def expand_graph(cube_state, center_pos):
                 current_neighbors[new_state] = (x, y)
             angle += 30
 
-    print("Graph expanded for state:", cube_state)
+    #print("Graph expanded for state:", cube_state)
 
 
 
@@ -185,8 +185,8 @@ def draw_graph(screen, font, clicked_state=None, last_node_in_path=None):
         pygame.draw.circle(screen, node_color, (start_x, start_y), node_radius)
 
     # Draw the new neighbor nodes
-    for state, pos in current_neighbors.items():
-        pygame.draw.circle(screen, NEIGHBOR_COLOR, pos, node_radius)
+    #for state, pos in current_neighbors.items():
+        #pygame.draw.circle(screen, NEIGHBOR_COLOR, pos, node_radius)
     if state in node_labels:
             move_label = node_labels[state]
             move_color = move_colors[move_label]  # Assuming move_colors is defined as per move labels
@@ -267,13 +267,16 @@ def main():
     clicked_state = None
     running = True
     moves = ["U", "Ui", "D", "Di", "L", "Li", "R", "Ri", "F", "Fi", "B", "Bi"]
+    #moves = ["U", "D", "L"]#, "R", "F", "B"]
+    #moves = ["Ui", "Di", "Li", "Ri", "Fi", "Bi", "U"]
     #moves = ["U", "D", "L", "R", "F", "B"]
-    #moves = ["Ui", "Di", "Li", "Ri", "Fi", "Bi"]
     font = pygame.freetype.Font(None, 20)
     graph_surface = pygame.Surface((max_x * scren_scale, max_y * scren_scale))
-
+    
     for move1 in moves:
         for move2 in moves:
+            print("Solved!", move1, move2)
+
             cube = Cube(initial_state)
             current_cube_state = cube.flat_str()
             center_pos = node_positions[current_cube_state]
@@ -295,15 +298,16 @@ def main():
                 draw_graph(graph_surface, font, clicked_state)
                 screen.fill((0, 0, 0))
                 scaled_graph = pygame.transform.scale(graph_surface, (max_x, max_y))
-                #screen.blit(scaled_graph, center_pos)
+            #    #screen.blit(scaled_graph, center_pos)
                 screen.blit(scaled_graph, (0,0))
-                #update_positions()
-                #draw_cube(cube.flat_str(), screen, scale)  # Draw the current cube
+            #    #update_positions()
+            #    #draw_cube(cube.flat_str(), screen, scale)  # Draw the current cube
                 pygame.display.flip()
-                pygame.time.wait(5)  # Delay for visual effect  # Skip the rest and go to the next pair if solved
+                pygame.event.pump()
+                #pygame.time.wait(5)  # Delay for visual effect  # Skip the rest and go to the next pair if solved
 
             # Visual update for the current move pair
-            screen.fill((0, 0, 0))
+            #screen.fill((0, 0, 0))
         
 
             for event in pygame.event.get():
@@ -321,11 +325,11 @@ def main():
                         running = False
         #update_positions()
         #draw_graph(screen,font, clicked_state)
-        print("loop_done")
-        pygame.time.wait(1000000)
+        #print("loop_done")
+        #pygame.time.wait(1000000)
         draw_graph(graph_surface, font, clicked_state)
-        screen.fill((0, 0, 0))
-        scaled_graph = pygame.transform.scale(graph_surface, (max_x, max_y))
+        #screen.fill((0, 0, 0))
+        scaled_graph = pygame.transform.scale(graph_surface, (0, 0))
         screen.blit(scaled_graph, center_pos)
         pygame.display.flip()
 
