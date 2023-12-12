@@ -1,4 +1,5 @@
 #Project Overview
+
 This repository is part of a discrete mathematics project focusing on the Rubik's Cube. It contains two Python files: cube.py and cube_looper.py. These scripts provide different ways to interact with and visualize the state space of a Rubik's Cube using concepts from graph theory, particularly Cayley's graph.
 
 #Dependencies
