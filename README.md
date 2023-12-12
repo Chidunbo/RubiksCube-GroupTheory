@@ -27,7 +27,7 @@ Run cube.py:
 python cube.py
 ```
 Interact with the program's graphical interface to explore different states of the Rubik's Cube and understand their relationships through the Cayley's graph.
-<img src="pics/1.gif" width="800" height="1000" />
+<img src="pics/1.gif" width="800" height="600" />
 ##cube_looper.py
 cube_looper.py generates and visualizes a graph based on a series of moves on the Rubik's Cube using standard Rubik's Cube notation. It uses similar principles as cube.py but focuses on creating a graph for a predefined series of moves.
 
